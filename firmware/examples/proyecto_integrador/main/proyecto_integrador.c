@@ -38,6 +38,8 @@
 #include "uart_mcu.h"
 /*==================[macros and definitions]=================================*/
 #define CONFIG_BLINK_PERIOD 1000
+#define CONFIG_BLINK_PERIOD_US 1000*1000 
+#define CONFIG_WRITE_PERIOD_US 500*1000
 /*==================[internal data definition]===============================*/
 uint16_t _distancia;
 bool _medicionActivada = false;
@@ -53,9 +55,18 @@ static void Medir(void *pvParameter)
     {
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);    /* La tarea espera en este punto hasta recibir una notificación */
         if (_medicionActivada)
-            _distancia = HcSr04ReadDistanceInCentimeters(); // funcion del ultrasonido que mide
+            _distancia = HcSr04ReadDistanceInCentimeters(); // Realiza la medición de distancia
 
     }
+}
+
+static void EnviarDatosUART(void *pvParameter){
+	while (true)
+	{
+		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+		UartSendString(UART_PC,"Distanca: .\r\n"); 
+		UartSendString(UART_PC,(char)*UartItoa(_distancia,10)); 
+	}
 }
 
 static void Regular_intensidad_luz(void *pvParameter){
@@ -99,14 +110,13 @@ static void Regular_apertura_haz(void *pvParameter){
 /*==================[external functions definition]==========================*/
 void app_main(void){
 	
-/* 	LedsInit();
 	serial_config_t UART_USB;
 	UART_USB.baud_rate = 115200;
 	UART_USB.port = UART_PC;
 	UartInit(&UART_USB);
-	setupRFID(&mfrcInstance);
+	//setupRFID(&mfrcInstance);
 
-	UartSendString(UART_PC,"Init MRFC522 test.\r\n"); */
+	
 	/*
     while(true){
 		UartSendString(UART_PC,"Reading... \r\n");
