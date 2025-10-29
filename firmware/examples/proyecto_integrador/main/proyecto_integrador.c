@@ -44,32 +44,36 @@ unsigned int last_user_ID;
 // RFID structs
 MFRC522Ptr_t mfrcInstance;
 /*==================[internal functions declaration]=========================*/
-/**
- * Executed every time the card reader detects a user in
- */
-/* void userTapIn() {
+uint16_t _distancia;
+bool _medicionActivada = false;
 
-//	show card UID
-	UartSendString(UART_PC,"\nCard uid bytes: ");
-	for (uint8_t i = 0; i < mfrcInstance->uid.size; i++) {
-		UartSendString(UART_PC," 0X");
-		UartSendString(UART_PC, (char*)UartItoa(mfrcInstance->uid.uidByte[i], 16));
-		UartSendString(UART_PC," ");
-	}
-	UartSendString(UART_PC,"\n\r");
-	// Convert the uid bytes to an integer, byte[0] is the MSB
-	last_user_ID =
-		(int)mfrcInstance->uid.uidByte[3] |
-		(int)mfrcInstance->uid.uidByte[2] << 8 |
-		(int)mfrcInstance->uid.uidByte[1] << 16 |
-		(int)mfrcInstance->uid.uidByte[0] << 24;
+void FuncTimerA(void* param){
+    //vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);    /* Envía una notificación a la tarea Medir asociada al sensor */
+	
+}
 
-	UartSendString(UART_PC,"Card Read user ID: ");
-	UartSendString(UART_PC, (char*)UartItoa(last_user_ID, 10));
-	UartSendString(UART_PC,"\n\r");
+static void Medir(void *pvParameter)
+{
+    while (true)
+    {
+		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);    /* La tarea espera en este punto hasta recibir una notificación */
+        if (_medicionActivada)
+            _distancia = HcSr04ReadDistanceInCentimeters(); // funcion del ultrasonido que mide
+
+    }
+}
+
+static void Regular_intensidad_luz(void *pvParameter){
 
 
-} */
+
+}
+
+static void Regular_apertura_haz(void *pvParameter){
+
+
+
+}
 /*==================[external functions definition]==========================*/
 void app_main(void){
 	
