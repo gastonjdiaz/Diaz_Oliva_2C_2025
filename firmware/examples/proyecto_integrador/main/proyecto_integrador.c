@@ -42,10 +42,8 @@
 uint16_t _distancia;
 bool _medicionActivada = false;
 
-TaskHandle_t medir_task_handle;
-/*==================[internal functions declaration]=========================*/
 void FuncTimerA(void* param){
-    vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);    /* Envía una notificación a la tarea Medir asociada al sensor */
+    //vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);    /* Envía una notificación a la tarea Medir asociada al sensor */
 	
 }
 
@@ -61,6 +59,33 @@ static void Medir(void *pvParameter)
 }
 
 static void Regular_intensidad_luz(void *pvParameter){
+if (_medicionActivada == true) {
+
+	if (_distancia < 25) //modo maxima intensidad para procedimientos cortos
+		PWMSetDutyCycle(pwm_out_t out, uint8_t duty_cycle);
+	else if (_distancia < 35)
+		PWMSetDutyCycle(pwm_out_t out, uint8_t duty_cycle);
+	else if (_distancia < 45)
+		PWMSetDutyCycle(pwm_out_t out, uint8_t duty_cycle);
+	else if (_distancia < 60) //modo reposo
+		PWMSetDutyCycle(pwm_out_t out, uint8_t duty_cycle);
+	else (_distancia > 100) //se apaga el led
+		PWMSetDutyCycle(pwm_out_t out, uint8_t duty_cycle);
+
+}
+if (_medicionActivada == true) {
+
+	if (_distancia > 100) //modo apagado
+		PWMSetDutyCycle(pwm_out_t out, uint8_t duty_cycle);
+	if (_distancia < 90) //modo encendido
+		if (_distancia > 60) //modo reposo
+			PWMSetDutyCycle(pwm_out_t out, uint8_t duty_cycle);
+		else if (_distancia > 45) //modo trabajo 2
+			PWMSetDutyCycle(pwm_out_t out, uint8_t duty_cycle);
+		else if (_distancia > 35) //modo trabajo 1
+			PWMSetDutyCycle(pwm_out_t out, uint8_t duty_cycle);
+		else (_distancia > 20) //modo intensidad maxima para procedimientos cortos
+			PWMSetDutyCycle(pwm_out_t out, uint8_t duty_cycle);
 
 
 
