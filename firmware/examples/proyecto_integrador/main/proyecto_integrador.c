@@ -36,19 +36,16 @@
 #include "freertos/task.h"
 #include "led.h"
 #include "uart_mcu.h"
-#include "rfid_utils.h"
 /*==================[macros and definitions]=================================*/
 #define CONFIG_BLINK_PERIOD 1000
 /*==================[internal data definition]===============================*/
-unsigned int last_user_ID;
-// RFID structs
-MFRC522Ptr_t mfrcInstance;
-/*==================[internal functions declaration]=========================*/
 uint16_t _distancia;
 bool _medicionActivada = false;
 
+TaskHandle_t medir_task_handle;
+/*==================[internal functions declaration]=========================*/
 void FuncTimerA(void* param){
-    //vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);    /* Envía una notificación a la tarea Medir asociada al sensor */
+    vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);    /* Envía una notificación a la tarea Medir asociada al sensor */
 	
 }
 
