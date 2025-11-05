@@ -38,15 +38,16 @@
 #include "uart_mcu.h"
 #include "pwm_mcu.h"
 #include "hc_sr04.h"
+#include "servo_sg90.h"
 /*==================[macros and definitions]=================================*/
-#define DISTANCE_CLOSE = 25	   // distancia en cm para modo de trabajo intenso
-#define DISTANCE_MEDIUM = 45   // distancia en cm para modo de trabajo moderado
-#define DISTANCE_FAR = 60	   // distancia en cm para modo de reposo
-#define DISTANCE_OFF = 100	   // distancia en cm para modo apagado
-#define DUTY_CYCLE_MAX = 100   // ciclo de trabajo maximo
-#define DUTY_CYCLE_MEDIUM = 60 // ciclo de trabajo medio medio
-#define DUTY_CYCLE_LOW = 30	   // ciclo de trabajo bajo
-#define DUTY_CYCLE_OFF = 0	   // ciclo de trabajo apagado
+#define DISTANCE_CLOSE  25	   // distancia en cm para modo de trabajo intenso
+#define DISTANCE_MEDIUM  45   // distancia en cm para modo de trabajo moderado
+#define DISTANCE_FAR  60	   // distancia en cm para modo de reposo
+#define DISTANCE_OFF  100	   // distancia en cm para modo apagado
+#define DUTY_CYCLE_MAX  100   // ciclo de trabajo maximo
+#define DUTY_CYCLE_MEDIUM  60 // ciclo de trabajo medio medio
+#define DUTY_CYCLE_LOW  30	   // ciclo de trabajo bajo
+#define DUTY_CYCLE_OFF  0	   // ciclo de trabajo apagado
 #define CONFIG_WRITE_PERIOD_US 500 * 1000
 /*==================[internal data definition]===============================*/
 uint16_t _distancia;
@@ -73,7 +74,7 @@ static void EnviarDatosUART(void *pvParameter)
 	{
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 		UartSendString(UART_PC, "Distanca: .\r\n");
-		UartSendString(UART_PC, (char)*UartItoa(_distancia, 10));
+		UartSendString(UART_PC, (char*)UartItoa(_distancia, 10));
 	}
 }
 
@@ -107,20 +108,18 @@ void app_main(void)
 	UART_USB.baud_rate = 115200;
 	UART_USB.port = UART_PC;
 	UartInit(&UART_USB);
-	// setupRFID(&mfrcInstance);
 
-	/*
-	while(true){
-		UartSendString(UART_PC,"Reading... \r\n");
-		if (PICC_IsNewCardPresent(mfrcInstance)) {
-			if (PICC_ReadCardSerial(mfrcInstance)) {
-				LedOn(LED_1);
-				userTapIn();
-				LedOff(LED_1);
-			}
-		}
-		vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
-	}
-		*/
+	ServoInit(SERVO_1, GPIO_19); // Inicializa servo en GPIO5
+	ServoMove(SERVO_1, -90);    // Coloca servo en posicion inicial (0 grados)
+	vTaskDelay(pdMS_TO_TICKS(1000));
+	ServoMove(SERVO_1, -30); 
+	vTaskDelay(pdMS_TO_TICKS(1000));
+	ServoMove(SERVO_1, 0); 
+	vTaskDelay(pdMS_TO_TICKS(1000));
+	ServoMove(SERVO_1, 30); 
+	vTaskDelay(pdMS_TO_TICKS(1000));
+	ServoMove(SERVO_1, 90); 
+	
+
 }
 /*==================[end of file]============================================*/
