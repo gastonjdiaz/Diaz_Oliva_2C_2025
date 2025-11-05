@@ -45,6 +45,7 @@ uint16_t _distancia;
 bool _medicionActivada = false;
 
 void FuncTimerA(void* param){
+	
     //vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);    /* Envía una notificación a la tarea Medir asociada al sensor */
 	
 }
@@ -132,3 +133,5 @@ void app_main(void){
 		*/
 }
 /*==================[end of file]============================================*/
+
+
