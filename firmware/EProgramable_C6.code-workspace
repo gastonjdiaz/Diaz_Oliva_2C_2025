@@ -98,6 +98,7 @@
             "rtc_mcu.h": "c",
             "fft.h": "c",
             "i2c.h": "c",
+            "cstdint": "c"
         },
     },
     "tasks": {
