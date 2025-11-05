@@ -48,7 +48,11 @@
 #define DUTY_CYCLE_MEDIUM  60 // ciclo de trabajo medio medio
 #define DUTY_CYCLE_LOW  30	   // ciclo de trabajo bajo
 #define DUTY_CYCLE_OFF  0	   // ciclo de trabajo apagado
-#define CONFIG_WRITE_PERIOD_US 500 * 1000
+#define APERTURE_WIDE_OPEN -90   // apertura de iris maxima
+#define APERTURE_MEDIUM_OPEN 0 // apertura de iris media
+#define APERTURE_NARROW_OPEN 90  // apertura de iris minima
+
+#define CONFIG_OPERATION_CYCLE_MS 500
 /*==================[internal data definition]===============================*/
 uint16_t _distancia;
 bool _medicionActivada = false;
@@ -62,9 +66,11 @@ static void Medir(void *pvParameter)
 {
 	while (true)
 	{
-		ulTaskNotifyTake(pdTRUE, portMAX_DELAY); /* La tarea espera en este punto hasta recibir una notificación */
+		
 		if (_medicionActivada)
 			_distancia = HcSr04ReadDistanceInCentimeters(); // Realiza la medición de distancia
+		
+		vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
 	}
 }
 
@@ -75,6 +81,7 @@ static void EnviarDatosUART(void *pvParameter)
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 		UartSendString(UART_PC, "Distanca: .\r\n");
 		UartSendString(UART_PC, (char*)UartItoa(_distancia, 10));
+		vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
 	}
 }
 
@@ -82,23 +89,33 @@ static void Regular_intensidad_luz(void *pvParameter)
 {
 	if (_medicionActivada)
 	{
-
-		if (_distancia < DISTANCE_CLOSE) // modo maxima intensidad para procedimientos cortos
+		if (_distancia < DISTANCE_CLOSE) 
 			PWMSetDutyCycle(PWM_1, DUTY_CYCLE_MAX);
 		else if (_distancia < DISTANCE_MEDIUM)
 			PWMSetDutyCycle(PWM_1, DUTY_CYCLE_MEDIUM);
 		else if (_distancia < DISTANCE_FAR)
 			PWMSetDutyCycle(PWM_1, DUTY_CYCLE_LOW);
-		else if	(_distancia > DISTANCE_OFF) // se apaga el led
+		else if	(_distancia > DISTANCE_OFF) 
 				PWMSetDutyCycle(PWM_1, DUTY_CYCLE_OFF);
 	}
 	else
 	{
 		PWMSetDutyCycle(PWM_1, DUTY_CYCLE_OFF);
 	}
+	vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
 }
 static void Regular_apertura_haz(void *pvParameter)
 {
+	if (_distancia < DISTANCE_CLOSE) 
+		ServoMove(SERVO_1, APERTURE_NARROW_OPEN);
+	else if (_distancia < DISTANCE_MEDIUM)
+		ServoMove(SERVO_1, APERTURE_MEDIUM_OPEN);
+	else if (_distancia < DISTANCE_FAR)
+		ServoMove(SERVO_1, APERTURE_WIDE_OPEN);
+	else if	(_distancia > DISTANCE_OFF)	 
+				ServoMove(SERVO_1, APERTURE_WIDE_OPEN);
+
+	vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
 }
 /*==================[external functions definition]==========================*/
 void app_main(void)
@@ -109,16 +126,12 @@ void app_main(void)
 	UART_USB.port = UART_PC;
 	UartInit(&UART_USB);
 
-	ServoInit(SERVO_1, GPIO_19); // Inicializa servo en GPIO5
-	ServoMove(SERVO_1, -90);    // Coloca servo en posicion inicial (0 grados)
+	ServoInit(SERVO_1, GPIO_19); // Inicializa servo en GPIO19
+	ServoMove(SERVO_1, APERTURE_WIDE_OPEN);    // Coloca servo en posicion inicial (0 grados)
 	vTaskDelay(pdMS_TO_TICKS(1000));
-	ServoMove(SERVO_1, -30); 
+	ServoMove(SERVO_1, APERTURE_MEDIUM_OPEN); 
 	vTaskDelay(pdMS_TO_TICKS(1000));
-	ServoMove(SERVO_1, 0); 
-	vTaskDelay(pdMS_TO_TICKS(1000));
-	ServoMove(SERVO_1, 30); 
-	vTaskDelay(pdMS_TO_TICKS(1000));
-	ServoMove(SERVO_1, 90); 
+	ServoMove(SERVO_1, APERTURE_NARROW_OPEN); 
 	
 
 }
