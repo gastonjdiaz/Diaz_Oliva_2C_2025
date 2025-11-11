@@ -53,14 +53,14 @@
 #define APERTURE_NARROW_OPEN 90  // apertura de iris minima
 
 #define CONFIG_OPERATION_CYCLE_MS 500
+#define CONFIG_MEASUREMENT_CYCLE_MS 200
 /*==================[internal data definition]===============================*/
 uint16_t _distancia;
 bool _medicionActivada = false;
 
-void FuncTimerA(void *param)
-{
-	// vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);    /* Envía una notificación a la tarea Medir asociada al sensor */
-}
+TaskHandle_t medir_task_handle = NULL;
+TaskHandle_t ajustarEInformar_task_handle = NULL;
+
 
 static void Medir(void *pvParameter)
 {
@@ -70,7 +70,7 @@ static void Medir(void *pvParameter)
 		if (_medicionActivada)
 			_distancia = HcSr04ReadDistanceInCentimeters(); // Realiza la medición de distancia
 		
-		vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
+		vTaskDelay(pdMS_TO_TICKS(CONFIG_MEASUREMENT_CYCLE_MS));
 	}
 }
 
@@ -79,9 +79,18 @@ static void EnviarDatosUART(void *pvParameter)
 	while (true)
 	{
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-		UartSendString(UART_PC, "Distanca: .\r\n");
+		UartSendString(UART_PC, "Potencia: .\r\n");
+		if (_distancia < DISTANCE_CLOSE) 
+			UartSendString(UART_PC, (char*)UartItoa(DUTY_CYCLE_MAX, 10));
+		else if (_distancia < DISTANCE_MEDIUM)
+			UartSendString(UART_PC, (char*)UartItoa(DUTY_CYCLE_MEDIUM, 10));
+		else if (_distancia < DISTANCE_FAR)
+			UartSendString(UART_PC, (char*)UartItoa(DUTY_CYCLE_LOW, 10));
+		else if	(_distancia > DISTANCE_OFF) 
+			UartSendString(UART_PC, (char*)UartItoa(DUTY_CYCLE_OFF, 10));
+
 		UartSendString(UART_PC, (char*)UartItoa(_distancia, 10));
-		vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
+		// vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
 	}
 }
 
@@ -102,7 +111,7 @@ static void Regular_intensidad_luz(void *pvParameter)
 	{
 		PWMSetDutyCycle(PWM_1, DUTY_CYCLE_OFF);
 	}
-	vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
+	// vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
 }
 static void Regular_apertura_haz(void *pvParameter)
 {
@@ -117,6 +126,17 @@ static void Regular_apertura_haz(void *pvParameter)
 
 	vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
 }
+static void AjustarEInformar(void *pvParameter)
+{
+	while (true)
+	{
+		Regular_intensidad_luz(NULL);
+		Regular_apertura_haz(NULL);
+		EnviarDatosUART(NULL);
+
+		vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
+	}
+}
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
@@ -125,13 +145,17 @@ void app_main(void)
 	UART_USB.baud_rate = 115200;
 	UART_USB.port = UART_PC;
 	UartInit(&UART_USB);
-
 	ServoInit(SERVO_1, GPIO_19); // Inicializa servo en GPIO19
-	ServoMove(SERVO_1, APERTURE_WIDE_OPEN);    // Coloca servo en posicion inicial (0 grados)
-	vTaskDelay(pdMS_TO_TICKS(1000));
-	ServoMove(SERVO_1, APERTURE_MEDIUM_OPEN); 
-	vTaskDelay(pdMS_TO_TICKS(1000));
-	ServoMove(SERVO_1, APERTURE_NARROW_OPEN); 
+
+
+	xTaskCreate(Medir, "Medir", 2048, NULL, 5, &medir_task_handle);
+	xTaskCreate(AjustarEInformar, "AjustarEInformar", 8192, NULL, 5, &ajustarEInformar_task_handle);
+
+	// ServoMove(SERVO_1, APERTURE_WIDE_OPEN);    // Coloca servo en posicion inicial (0 grados)
+	// vTaskDelay(pdMS_TO_TICKS(1000));
+	// ServoMove(SERVO_1, APERTURE_MEDIUM_OPEN); 
+	// vTaskDelay(pdMS_TO_TICKS(1000));
+	// ServoMove(SERVO_1, APERTURE_NARROW_OPEN); 
 	
 
 }
