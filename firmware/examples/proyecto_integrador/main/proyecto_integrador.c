@@ -105,7 +105,7 @@ static void Regular_intensidad_luz(void *pvParameter)
 		else if (_distancia < DISTANCE_FAR)
 			PWMSetDutyCycle(PWM_1, DUTY_CYCLE_LOW);
 		else if	(_distancia > DISTANCE_OFF) 
-				PWMSetDutyCycle(PWM_1, DUTY_CYCLE_OFF);
+			PWMSetDutyCycle(PWM_1, DUTY_CYCLE_OFF);
 	}
 	else
 	{
@@ -122,9 +122,9 @@ static void Regular_apertura_haz(void *pvParameter)
 	else if (_distancia < DISTANCE_FAR)
 		ServoMove(SERVO_1, APERTURE_WIDE_OPEN);
 	else if	(_distancia > DISTANCE_OFF)	 
-				ServoMove(SERVO_1, APERTURE_WIDE_OPEN);
+		ServoMove(SERVO_1, APERTURE_WIDE_OPEN);
 
-	vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
+	//vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
 }
 static void AjustarEInformar(void *pvParameter)
 {
@@ -146,6 +146,7 @@ void app_main(void)
 	UART_USB.port = UART_PC;
 	UartInit(&UART_USB);
 	ServoInit(SERVO_1, GPIO_19); // Inicializa servo en GPIO19
+	PWMInit(PWM_1, GPIO_1, 50); // Inicializa PWM en GPIO5 a 50Hz -> revisar frecuencia adecuada para la luz.
 
 
 	xTaskCreate(Medir, "Medir", 2048, NULL, 5, &medir_task_handle);
