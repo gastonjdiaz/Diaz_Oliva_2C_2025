@@ -40,10 +40,10 @@
 #include "hc_sr04.h"
 #include "servo_sg90.h"
 /*==================[macros and definitions]=================================*/
-#define DISTANCE_CLOSE  25	   // distancia en cm para modo de trabajo intenso
-#define DISTANCE_MEDIUM  45   // distancia en cm para modo de trabajo moderado
-#define DISTANCE_FAR  60	   // distancia en cm para modo de reposo
-#define DISTANCE_OFF  100	   // distancia en cm para modo apagado
+#define DISTANCE_CLOSE  8	   // distancia en cm para modo de trabajo intenso
+#define DISTANCE_MEDIUM  16   // distancia en cm para modo de trabajo moderado
+#define DISTANCE_FAR  24	   // distancia en cm para modo de reposo
+#define DISTANCE_OFF  30	   // distancia en cm para modo apagado
 #define DUTY_CYCLE_MAX  100   // ciclo de trabajo maximo
 #define DUTY_CYCLE_MEDIUM  60 // ciclo de trabajo medio medio
 #define DUTY_CYCLE_LOW  30	   // ciclo de trabajo bajo
@@ -56,10 +56,13 @@
 #define CONFIG_MEASUREMENT_CYCLE_MS 200
 /*==================[internal data definition]===============================*/
 uint16_t _distancia;
-bool _medicionActivada = false;
+bool _medicionActivada = true;
 
 TaskHandle_t medir_task_handle = NULL;
-TaskHandle_t ajustarEInformar_task_handle = NULL;
+TaskHandle_t PotenciaLuz_task_handle = NULL;
+TaskHandle_t AperturaHaz_task_handle = NULL;
+TaskHandle_t Uart_task_handle = NULL;
+
 
 
 static void Medir(void *pvParameter)
@@ -67,19 +70,18 @@ static void Medir(void *pvParameter)
 	while (true)
 	{
 		
-		if (_medicionActivada)
-			_distancia = HcSr04ReadDistanceInCentimeters(); // Realiza la medición de distancia
+	
+		_distancia = HcSr04ReadDistanceInCentimeters(); // Realiza la medición de distancia
 		
 		vTaskDelay(pdMS_TO_TICKS(CONFIG_MEASUREMENT_CYCLE_MS));
 	}
 }
 
-static void EnviarDatosUART(void *pvParameter)
+void EnviarDatosUART()
 {
 	while (true)
 	{
-		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-		UartSendString(UART_PC, "Potencia: .\r\n");
+		UartSendString(UART_PC, "Potencia: ");
 		if (_distancia < DISTANCE_CLOSE) 
 			UartSendString(UART_PC, (char*)UartItoa(DUTY_CYCLE_MAX, 10));
 		else if (_distancia < DISTANCE_MEDIUM)
@@ -89,42 +91,51 @@ static void EnviarDatosUART(void *pvParameter)
 		else if	(_distancia > DISTANCE_OFF) 
 			UartSendString(UART_PC, (char*)UartItoa(DUTY_CYCLE_OFF, 10));
 
+		UartSendString(UART_PC, "\r\n Distancia: ");
 		UartSendString(UART_PC, (char*)UartItoa(_distancia, 10));
-		// vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
+		UartSendString(UART_PC, "cm\r\n");
+
+		vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
 	}
 }
 
-static void Regular_intensidad_luz(void *pvParameter)
+void Regular_intensidad_luz()
 {
-	if (_medicionActivada)
+ while (true)
+ {
+		if (_distancia < DISTANCE_CLOSE) 
+			PWMSetDutyCycle(PWM_2, DUTY_CYCLE_MAX);
+		else if (_distancia < DISTANCE_MEDIUM)
+			PWMSetDutyCycle(PWM_2, DUTY_CYCLE_MEDIUM);
+		else if (_distancia < DISTANCE_FAR)
+			PWMSetDutyCycle(PWM_2, DUTY_CYCLE_LOW);
+		else if	(_distancia > DISTANCE_OFF) 
+			PWMSetDutyCycle(PWM_2, DUTY_CYCLE_OFF);
+	
+		//PWMSetDutyCycle(PWM_2, DUTY_CYCLE_OFF);
+	
+		vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
+ }
+ 
+
+}
+void Regular_apertura_haz()
+{
+	while (true)
 	{
 		if (_distancia < DISTANCE_CLOSE) 
-			PWMSetDutyCycle(PWM_1, DUTY_CYCLE_MAX);
+			ServoMove(SERVO_1, APERTURE_NARROW_OPEN);
 		else if (_distancia < DISTANCE_MEDIUM)
-			PWMSetDutyCycle(PWM_1, DUTY_CYCLE_MEDIUM);
+			ServoMove(SERVO_1, APERTURE_MEDIUM_OPEN);
 		else if (_distancia < DISTANCE_FAR)
-			PWMSetDutyCycle(PWM_1, DUTY_CYCLE_LOW);
-		else if	(_distancia > DISTANCE_OFF) 
-			PWMSetDutyCycle(PWM_1, DUTY_CYCLE_OFF);
-	}
-	else
-	{
-		PWMSetDutyCycle(PWM_1, DUTY_CYCLE_OFF);
-	}
-	// vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
-}
-static void Regular_apertura_haz(void *pvParameter)
-{
-	if (_distancia < DISTANCE_CLOSE) 
-		ServoMove(SERVO_1, APERTURE_NARROW_OPEN);
-	else if (_distancia < DISTANCE_MEDIUM)
-		ServoMove(SERVO_1, APERTURE_MEDIUM_OPEN);
-	else if (_distancia < DISTANCE_FAR)
-		ServoMove(SERVO_1, APERTURE_WIDE_OPEN);
-	else if	(_distancia > DISTANCE_OFF)	 
-		ServoMove(SERVO_1, APERTURE_WIDE_OPEN);
+			ServoMove(SERVO_1, APERTURE_WIDE_OPEN);
+		else if	(_distancia > DISTANCE_OFF)	 
+			ServoMove(SERVO_1, APERTURE_WIDE_OPEN);
 
-	//vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
+		vTaskDelay(pdMS_TO_TICKS(CONFIG_OPERATION_CYCLE_MS));
+	}
+	
+
 }
 static void AjustarEInformar(void *pvParameter)
 {
@@ -146,11 +157,26 @@ void app_main(void)
 	UART_USB.port = UART_PC;
 	UartInit(&UART_USB);
 	ServoInit(SERVO_1, GPIO_19); // Inicializa servo en GPIO19
-	PWMInit(PWM_1, GPIO_1, 50); // Inicializa PWM en GPIO5 a 50Hz -> revisar frecuencia adecuada para la luz.
+	PWMInit(PWM_2, GPIO_1, 100); // Inicializa PWM en GPIO5 a 50Hz -> revisar frecuencia adecuada para la luz.
+	HcSr04Init(GPIO_3, GPIO_2);
+
+	
+
+	// while (true)
+	// {
+	// 	int medicion = HcSr04ReadDistanceInCentimeters();
+	// 	UartSendString(UART_PC, (char*)UartItoa(medicion, 10));
+
+	// 	vTaskDelay(pdMS_TO_TICKS(1000));
 
 
+	// }
+	
 	xTaskCreate(Medir, "Medir", 2048, NULL, 5, &medir_task_handle);
-	xTaskCreate(AjustarEInformar, "AjustarEInformar", 8192, NULL, 5, &ajustarEInformar_task_handle);
+	xTaskCreate(Regular_apertura_haz, "AperturaHaz", 4096, NULL, 5, &AperturaHaz_task_handle);
+	xTaskCreate(Regular_intensidad_luz, "RegularLuz", 4096, NULL, 5, &PotenciaLuz_task_handle);
+	xTaskCreate(EnviarDatosUART, "EnviarDatos", 4096, NULL, 5, &Uart_task_handle);
+
 
 	// ServoMove(SERVO_1, APERTURE_WIDE_OPEN);    // Coloca servo en posicion inicial (0 grados)
 	// vTaskDelay(pdMS_TO_TICKS(1000));
