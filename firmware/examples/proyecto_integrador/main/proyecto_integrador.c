@@ -181,7 +181,7 @@ void app_main(void)
 	UART_USB.port = UART_PC;
 	UartInit(&UART_USB);
 	ServoInit(SERVO_1, GPIO_19); // Inicializa servo en GPIO19
-	PWMInit(PWM_2, GPIO_1, 100); // Inicializa PWM en GPIO5 a 100Hz 
+	PWMInit(PWM_2, GPIO_20, 100); // Inicializa PWM en GPIO_20 a 100Hz 
 	HcSr04Init(GPIO_3, GPIO_2);
 	
 	xTaskCreate(Medir, "Medir", 2048, NULL, 5, &medir_task_handle);
