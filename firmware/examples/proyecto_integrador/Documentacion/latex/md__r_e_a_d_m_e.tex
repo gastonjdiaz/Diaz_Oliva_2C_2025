@@ -1,0 +1,46 @@
+\chapter{Ejemplo MRFC522 }
+\hypertarget{md__r_e_a_d_m_e}{}\label{md__r_e_a_d_m_e}\index{Ejemplo MRFC522@{Ejemplo MRFC522}}
+\label{md__r_e_a_d_m_e_autotoc_md0}%
+\Hypertarget{md__r_e_a_d_m_e_autotoc_md0}%
+
+
+Este proyecto ejemplifica el uso del dispositivo MRFC522.
+
+En el mismo se pregunta cada 1 segundo por la presencia de algún tag. De acercarse alguno se podrá ver por el terminal el ID del mismo. El ejemplo utiliza el puerto serie (UART\+\_\+\+PC) para la comunicación de mensajes.\hypertarget{md__r_e_a_d_m_e_autotoc_md1}{}\doxysection{\texorpdfstring{Cómo usar el ejemplo}{Cómo usar el ejemplo}}\label{md__r_e_a_d_m_e_autotoc_md1}
+\hypertarget{md__r_e_a_d_m_e_autotoc_md2}{}\doxysubsection{\texorpdfstring{Hardware requerido}{Hardware requerido}}\label{md__r_e_a_d_m_e_autotoc_md2}
+
+\begin{DoxyItemize}
+\item ESP-\/\+EDU
+\item Módulo RFID-\/\+RC522
+\item Tags
+\end{DoxyItemize}\hypertarget{md__r_e_a_d_m_e_autotoc_md3}{}\doxysubsection{\texorpdfstring{Ejecutar la aplicación}{Ejecutar la aplicación}}\label{md__r_e_a_d_m_e_autotoc_md3}
+
+\begin{DoxyEnumerate}
+\item Luego de grabar la placa, correr el {\ttfamily Serial Monitor}
+\item Se podrá observar una salida con los valores como se muestra a continuación\+:
+\end{DoxyEnumerate}
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{.}
+\DoxyCodeLine{.}
+\DoxyCodeLine{.}
+\DoxyCodeLine{Reading...\ }
+\DoxyCodeLine{}
+\DoxyCodeLine{Card\ uid\ bytes:\ \ 0Xf6\ \ 0X84\ \ 0X19\ \ 0X9e\ }
+\DoxyCodeLine{Card\ Read\ user\ ID:\ 4135852446}
+\DoxyCodeLine{Reading...\ }
+\DoxyCodeLine{Reading...}
+\DoxyCodeLine{Reading...\ }
+\DoxyCodeLine{Reading...\ }
+\DoxyCodeLine{Reading...\ }
+\DoxyCodeLine{}
+\DoxyCodeLine{Card\ uid\ bytes:\ \ 0X83\ \ 0X33\ \ 0Xbd\ \ 0Xb\ }
+\DoxyCodeLine{Card\ Read\ user\ ID:\ 2201206027}
+\DoxyCodeLine{Reading...\ }
+\DoxyCodeLine{.}
+\DoxyCodeLine{.}
+\DoxyCodeLine{.}
+
+\end{DoxyCode}
+ 
