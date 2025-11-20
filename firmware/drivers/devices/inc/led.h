@@ -31,7 +31,7 @@
 typedef enum LEDs {
     LED_3 = (1 << 0), /**< Color red. Routed to GPIO_5 */
     LED_2 = (1 << 1), /**< Color yellow. Routed to GPIO_10 */
-    LED_1 = (1 << 2), /**< Color green. Routed to GPIO_11c
+    LED_1 = (1 << 2), /**< Color green. Routed to GPIO_11 */
 } led_t;
 /*==================[typedef]================================================*/
 
