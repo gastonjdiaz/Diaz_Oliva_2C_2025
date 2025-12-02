@@ -35,6 +35,9 @@
         },
         {
             "path": "examples/proyecto_integrador"
+        },
+        {
+            "path": "../../DIAZ_2C_2025/firmware/projects/20251202_DIAZ_FinalEProg"
         }
     ],
     "settings": {
